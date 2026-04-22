@@ -88,6 +88,34 @@
         }
 
         .paused .bar { animation-play-state: paused; height: 3px; }
+
+        /* Toast notification untuk autoplay */
+        .toast-autoplay {
+            position: fixed;
+            bottom: 100px;
+            right: 30px;
+            background: rgba(56, 189, 248, 0.9);
+            color: #020617;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 101;
+            backdrop-filter: blur(10px);
+            animation: slideIn 0.3s ease-out;
+            cursor: pointer;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>
@@ -105,7 +133,7 @@
             <span class="text-[8px] text-slate-400">The 1975</span>
         </div>
         <button id="musicToggle" class="w-8 h-8 flex items-center justify-center bg-sky-500 rounded-full text-white text-xs transition hover:scale-110">
-            <i class="fa-solid fa-pause" id="musicIcon"></i>
+            <i class="fa-solid fa-play" id="musicIcon"></i>
         </button>
     </div>
 
@@ -257,7 +285,7 @@
     </div>
 
     <audio id="bgMusic" loop>
-        <source src="https://files.catbox.moe/k3399m.mp3" type="audio/mpeg">
+        <source src="Audio/The1975.mp3" type="audio/mpeg">
     </audio>
 
     <footer class="py-32 text-center border-t border-slate-900/50">
@@ -273,16 +301,44 @@
         const musicToggle = document.getElementById('musicToggle');
         const musicIcon = document.getElementById('musicIcon');
         const visualizer = document.getElementById('visualizer');
+        
+        let toastTimeout = null;
 
-        // Play otomatis saat klik pertama
-        document.body.addEventListener('click', () => {
-            if (audio.paused) playAudio();
-        }, { once: true });
+        // Fungsi untuk menampilkan notifikasi
+        function showToast(message) {
+            const existingToast = document.querySelector('.toast-autoplay');
+            if (existingToast) existingToast.remove();
+            
+            const toast = document.createElement('div');
+            toast.className = 'toast-autoplay';
+            toast.innerHTML = message + ' <i class="fa-solid fa-volume-up ml-2"></i>';
+            toast.onclick = () => {
+                playAudio();
+                toast.remove();
+            };
+            document.body.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast && toast.parentNode) toast.remove();
+            }, 5000);
+        }
 
+        // Fungsi play audio
         function playAudio() {
-            audio.play().catch(e => console.log("Audio play blocked"));
-            musicIcon.className = "fa-solid fa-pause";
-            visualizer.classList.remove('paused');
+            audio.play()
+                .then(() => {
+                    musicIcon.className = "fa-solid fa-pause";
+                    visualizer.classList.remove('paused');
+                    // Hapus toast jika berhasil
+                    const toast = document.querySelector('.toast-autoplay');
+                    if (toast) toast.remove();
+                })
+                .catch(error => {
+                    console.log("Autoplay failed:", error);
+                    showToast('🔊 Klik di sini untuk memutar musik');
+                    musicIcon.className = "fa-solid fa-play";
+                    visualizer.classList.add('paused');
+                });
         }
 
         function pauseAudio() {
@@ -291,11 +347,58 @@
             visualizer.classList.add('paused');
         }
 
+        // Event listener untuk tombol musik
         musicToggle.addEventListener('click', (e) => {
             e.stopPropagation();
-            if (audio.paused) playAudio(); else pauseAudio();
+            if (audio.paused) {
+                playAudio();
+            } else {
+                pauseAudio();
+            }
         });
 
+        // STRATEGI AUTOPLAY:
+        // 1. Coba play otomatis saat halaman dimuat
+        // 2. Jika gagal, dengarkan event interaksi pertama user
+        // 3. Gunakan berbagai event untuk memastikan
+        
+        const tryAutoPlay = () => {
+            audio.play().then(() => {
+                musicIcon.className = "fa-solid fa-pause";
+                visualizer.classList.remove('paused');
+                console.log("Autoplay success!");
+            }).catch(error => {
+                console.log("Autoplay blocked, waiting for user interaction");
+                showToast('🎵 Klik di sini untuk mulai musik');
+                musicIcon.className = "fa-solid fa-play";
+                visualizer.classList.add('paused');
+            });
+        };
+
+        // Coba autoplay segera
+        tryAutoPlay();
+        
+        // Backup: Coba lagi saat window load
+        window.addEventListener('load', () => {
+            setTimeout(tryAutoPlay, 100);
+        });
+        
+        // Daftarkan event listener untuk berbagai interaksi user
+        const startMusicOnInteraction = () => {
+            if (audio.paused) {
+                playAudio();
+            }
+            // Hapus listener setelah berhasil
+            document.removeEventListener('click', startMusicOnInteraction);
+            document.removeEventListener('touchstart', startMusicOnInteraction);
+            document.removeEventListener('scroll', startMusicOnInteraction);
+        };
+        
+        // Jika autoplay gagal, mulai saat user berinteraksi
+        document.addEventListener('click', startMusicOnInteraction);
+        document.addEventListener('touchstart', startMusicOnInteraction);
+        document.addEventListener('scroll', startMusicOnInteraction);
+        
         // --- Particles Background ---
         const canvas = document.getElementById('canvas-bg');
         const ctx = canvas.getContext('2d');
