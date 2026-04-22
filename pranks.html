@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hadiah Spesial</title>
+    <style>
+        body {
+            margin: 0;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #ffffff;
+            font-family: 'Arial', sans-serif;
+            overflow: hidden;
+        }
+
+        #main-content {
+            text-align: center;
+        }
+
+        h1 { color: #333; }
+
+        #btn-buka {
+            padding: 15px 35px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        /* Tampilan Overlay Hitam dengan Tulisan */
+        #jumpscare-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            display: none; /* Sembunyi di awal */
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        #jumpscare-text {
+            color: red;
+            font-size: 8rem; /* Ukuran tulisan sangat besar */
+            font-weight: bold;
+            text-transform: uppercase;
+            text-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+        }
+    </style>
+</head>
+<body>
+
+    <div id="main-content">
+        <h1>Nih Hadiah Buat Kamu 🤫</h1>
+        <button id="btn-buka">KLIK UNTUK BUKA</button>
+    </div>
+
+    <div id="jumpscare-overlay">
+        <div id="jumpscare-text">DOORRR!!!</div>
+    </div>
+
+    <audio id="scream-snd" src="https://www.soundjay.com/human/sounds/person-screaming-01.mp3"></audio>
+
+    <script>
+        const btn = document.getElementById('btn-buka');
+        const overlay = document.getElementById('jumpscare-overlay');
+        const sound = document.getElementById('scream-snd');
+
+        btn.addEventListener('click', function() {
+            // Ubah display menjadi flex agar teks di tengah
+            overlay.style.display = 'flex';
+            
+            // Putar suara
+            sound.play();
+
+            // Masuk mode Fullscreen
+            if (document.documentElement.requestFullscreen) {
+                document.documentElement.requestFullscreen();
+            }
+        });
+    </script>
+</body>
+</html>
